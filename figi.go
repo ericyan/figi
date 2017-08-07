@@ -17,6 +17,7 @@ func New(s string) (FIGI, error) {
 	}
 
 	var id [12]byte
+	var checksum int
 	for i := 0; i < 12; i++ {
 		switch {
 		case '0' <= s[i] && s[i] <= '9':
@@ -28,6 +29,17 @@ func New(s string) (FIGI, error) {
 		default:
 			return FIGI{}, ErrInvalid
 		}
+
+		// Calculate checksum using the Luhn algorithm
+		num := int(id[i])
+		if (i%2 != 0) && (i != 11) {
+			num *= 2
+		}
+		checksum += (num / 10) + (num % 10)
+	}
+
+	if checksum%10 != 0 {
+		return FIGI{}, ErrInvalid
 	}
 
 	return FIGI(id), nil
