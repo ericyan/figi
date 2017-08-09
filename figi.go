@@ -11,23 +11,23 @@ var (
 
 type FIGI [12]byte
 
-func New(s string) (FIGI, error) {
-	if len(s) != 12 {
-		return FIGI{}, ErrInvalid
+func (id *FIGI) UnmarshalText(text []byte) error {
+	if len(text) != 12 {
+		return ErrInvalid
 	}
 
-	var id [12]byte
 	var checksum int
 	for i := 0; i < 12; i++ {
+		c := text[i]
 		switch {
-		case '0' <= s[i] && s[i] <= '9':
-			id[i] = s[i] - '0'
-		case 'a' <= s[i] && s[i] <= 'z':
-			id[i] = s[i] - 'a' + 10
-		case 'A' <= s[i] && s[i] <= 'Z':
-			id[i] = s[i] - 'A' + 10
+		case '0' <= c && c <= '9':
+			id[i] = c - '0'
+		case 'a' <= c && c <= 'z':
+			id[i] = c - 'a' + 10
+		case 'A' <= c && c <= 'Z':
+			id[i] = c - 'A' + 10
 		default:
-			return FIGI{}, ErrInvalid
+			return ErrInvalid
 		}
 
 		// Calculate checksum using the Luhn algorithm
@@ -39,13 +39,13 @@ func New(s string) (FIGI, error) {
 	}
 
 	if checksum%10 != 0 {
-		return FIGI{}, ErrInvalid
+		return ErrInvalid
 	}
 
-	return FIGI(id), nil
+	return nil
 }
 
-func (id FIGI) String() string {
+func (id *FIGI) MarshalText() ([]byte, error) {
 	s := make([]byte, 12)
 	for i, c := range id {
 		if c < 10 {
@@ -55,5 +55,14 @@ func (id FIGI) String() string {
 		}
 	}
 
-	return string(s)
+	return s, nil
+}
+
+func (id *FIGI) String() string {
+	text, err := id.MarshalText()
+	if err != nil {
+		return "<invalid>"
+	}
+
+	return string(text)
 }
