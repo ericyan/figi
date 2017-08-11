@@ -11,12 +11,30 @@ var (
 
 type FIGI [12]byte
 
+// Validate returns an error if the check digit does not give a valid
+// checksum. The checksum is calculated using the Luhn algorithm.
+func (id *FIGI) Validate() error {
+	var checksum int
+	for i, c := range id {
+		num := int(c)
+		if (i%2 != 0) && (i != 11) {
+			num *= 2
+		}
+		checksum += (num / 10) + (num % 10)
+	}
+
+	if checksum%10 != 0 {
+		return ErrInvalid
+	}
+
+	return nil
+}
+
 func (id *FIGI) UnmarshalText(text []byte) error {
 	if len(text) != 12 {
 		return ErrInvalid
 	}
 
-	var checksum int
 	for i := 0; i < 12; i++ {
 		c := text[i]
 		switch {
@@ -29,20 +47,9 @@ func (id *FIGI) UnmarshalText(text []byte) error {
 		default:
 			return ErrInvalid
 		}
-
-		// Calculate checksum using the Luhn algorithm
-		num := int(id[i])
-		if (i%2 != 0) && (i != 11) {
-			num *= 2
-		}
-		checksum += (num / 10) + (num % 10)
 	}
 
-	if checksum%10 != 0 {
-		return ErrInvalid
-	}
-
-	return nil
+	return id.Validate()
 }
 
 func (id *FIGI) MarshalText() ([]byte, error) {
