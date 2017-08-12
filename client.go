@@ -33,6 +33,10 @@ type MappingResponse struct {
 	}
 }
 
+func (resp MappingResponse) Success() bool {
+	return resp.Error == "" && len(resp.Data) > 0
+}
+
 type Client struct {
 	APIKey string
 	*http.Client
